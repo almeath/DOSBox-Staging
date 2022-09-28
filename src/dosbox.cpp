@@ -408,18 +408,9 @@ static void DOSBOX_RealInit(Section * sec) {
 	VGA_SetRatePreference(section->Get_string("dos_rate"));
 }
 
-// Returns decimal seconds of elapsed uptime.
-// The first call starts the uptime counter (and returns 0.0 seconds of uptime).
-double DOSBOX_GetUptime()
-{
-	static auto start_ms = GetTicks();
-	return GetTicksSince(start_ms) / millis_in_second;
-}
-
-void DOSBOX_Init()
-{
-	Section_prop *secprop;
-	Prop_int *Pint;
+void DOSBOX_Init() {
+	Section_prop * secprop;
+	Prop_int* Pint;
 	Prop_int *pint = nullptr;
 	Prop_hex* Phex;
 	Prop_string* Pstring; // use pstring when touching properties
@@ -468,7 +459,7 @@ void DOSBOX_Init()
 	secprop->AddInitFunction(&MEM_Init);//done
 	secprop->AddInitFunction(&HARDWARE_Init);//done
 	pint = secprop->Add_int("memsize", when_idle, 16);
-	pint->SetMinMax(1, 63);
+	pint->SetMinMax(1, 383);
 	pint->Set_help(
 	        "Amount of memory DOSBox has in megabytes.\n"
 	        "This value is best left at its default to avoid problems with some games,\n"
@@ -1241,11 +1232,6 @@ void DOSBOX_Init()
 	        "# This is the configuration file for " CANONICAL_PROJECT_NAME " (%s).\n"
 	        "# Lines starting with a '#' character are comments.\n");
 	MSG_Add("CONFIG_SUGGESTED_VALUES", "Possible values");
-
-	// Initialize the uptime counter when launching the first shell. This
-	// ensures that slow-performing configurable tasks (like loading MIDI
-	// SF2 files) have already been performed and won't affect this time.
-	(void)DOSBOX_GetUptime();
 
 	control->SetStartUp(&SHELL_Init);
 }
