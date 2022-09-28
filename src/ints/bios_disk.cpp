@@ -190,14 +190,14 @@ uint8_t imageDisk::Write_Sector(uint32_t head,uint32_t cylinder,uint32_t sector,
 
 
 uint8_t imageDisk::Write_AbsoluteSector(uint32_t sectnum, void *data) {
-	uint32_t bytenum;
+	uint64_t bytenum;
 
-	bytenum = sectnum * sector_size;
+	bytenum = (uint64_t)sectnum * sector_size;
 
 	//LOG_MSG("Writing sectors to %ld at bytenum %d", sectnum, bytenum);
 
 	if (last_action == READ || bytenum != current_fpos) {
-		if (fseek(diskimg, bytenum, SEEK_SET) != 0) {
+		if (fseeko64(diskimg, bytenum, SEEK_SET) != 0) {
 			LOG_ERR("BIOSDISK: Could not seek to byte %u in file '%s': %s",
 			        bytenum, diskname, strerror(errno));
 			return 0xff;
@@ -223,7 +223,7 @@ imageDisk::imageDisk(FILE *img_file, const char *img_name, uint32_t img_size_k, 
           current_fpos(0),
           last_action(NONE)
 {
-	fseek(diskimg,0,SEEK_SET);
+	fseeko64(diskimg,0,SEEK_SET);
 	memset(diskname,0,512);
 	safe_strcpy(diskname, img_name);
 	if (!is_hdd) {
@@ -316,6 +316,30 @@ static bool driveInactive(uint8_t driveNum) {
 		return true;
 	}
 	return false;
+}
+
+static struct {
+    uint8_t sz;
+    uint8_t res;
+    uint16_t num;
+    uint16_t off;
+    uint16_t seg;
+    uint32_t sector;
+} dap;
+
+static void readDAP(uint16_t seg, uint16_t off) {
+    dap.sz = real_readb(seg,off++);
+    dap.res = real_readb(seg,off++);
+    dap.num = real_readw(seg,off); off += 2;
+    dap.off = real_readw(seg,off); off += 2;
+    dap.seg = real_readw(seg,off); off += 2;
+
+    /* Although sector size is 64-bit, 32-bit 2TB limit should be more than enough */
+    dap.sector = real_readd(seg,off); off +=4;
+
+    if (real_readd(seg,off)) {
+        E_Exit("INT13: 64-bit sector addressing not supported");
+    }
 }
 
 template<typename T, size_t N>

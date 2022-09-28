@@ -758,8 +758,8 @@ fatDrive::fatDrive(const char *sysFilename,
 	created_successfully = (diskfile != nullptr);
 	if (!created_successfully)
 		return;
-	fseek(diskfile, 0L, SEEK_END);
-	filesize = (uint32_t)ftell(diskfile) / 1024L;
+	fseeko64(diskfile, 0L, SEEK_END);
+	filesize = (uint32_t)ftello64(diskfile) / 1024L;
 	is_hdd = (filesize > 2880);
 
 	/* Load disk image */
@@ -883,6 +883,10 @@ fatDrive::fatDrive(const char *sysFilename,
 		(bootbuffer.sectorspertrack == 0) ||
 		(bootbuffer.sectorspertrack > cylsector)) {
 		created_successfully = false;
+                        //created_successfully = false;
+                               LOG_MSG("FAT type not supported, mounting image only");
+                               fattype = FAT32;    // Avoid parsing dir entries, see fatDrive::FindFirst()...should work for unformatted images as well
+        
 		return;
 	}
 
@@ -923,8 +927,8 @@ fatDrive::fatDrive(const char *sysFilename,
 	memset(fatSectBuffer,0,1024);
 	curFatSect = 0xffffffff;
 
-	type = DosDriveType::Fat;
-	safe_strcpy(info, sysFilename);
+	safe_strcpy(info, "fatDrive ");
+	safe_strcat(info, sysFilename);
 }
 
 bool fatDrive::AllocationInfo(uint16_t *_bytes_sector, uint8_t *_sectors_cluster, uint16_t *_total_clusters, uint16_t *_free_clusters) {
@@ -1100,6 +1104,7 @@ bool fatDrive::FileUnlink(char * name) {
 
 bool fatDrive::FindFirst(char *_dir, DOS_DTA &dta,bool /*fcb_findfirst*/) {
 	direntry dummyClust;
+    if(fattype==FAT32) return false;
 #if 0
 	uint8_t attr;char pattern[DOS_NAMELENGTH_ASCII];
 	dta.GetSearchParams(attr,pattern);
