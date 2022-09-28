@@ -1,0 +1,19 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "name": "dosbox-staging",
+    "description": "DOSBox Staging is a fork of the DOSBox project that focuses on ease of use, modern technology and best practices.",
+    "version": "0.79.0",
+    "dependencies": [
+        "fluidsynth",
+        "gtest",
+        "iir1",
+        "libmt32emu",
+        "libpng",
+        "opusfile",
+        "sdl2",
+        "sdl2-net",
+        "speexdsp",
+        "tracy",
+        "zlib"
+    ]
+}
